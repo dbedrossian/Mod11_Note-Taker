@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const db = require('./db/db.json')
+const db = require('./db/db.json');
 const uuid = require('./uuid/uuid.js');
 const { title } = require('process');
 
@@ -29,12 +29,12 @@ app.get('/notes', (req, res) => {
 app.post('/api/notes', (req, res) => {
     console.info(`${req.method} request received to add a new note`);
 
-    const { noteTitle, noteBody } = req.body;
+    const { noteTitle, noteText } = req.body;
 
-    if (noteTitle && noteBody) {
+    if (noteTitle && noteText) {
         const newNote = {
             noteTitle,
-            noteBody,
+            noteText,
             review_id: uuid(),
         };
 
@@ -48,11 +48,11 @@ app.post('/api/notes', (req, res) => {
 
                 fs.writeFile(
                     './db/db.json',
-                    JSON.stringify(parsedNotes, null, 4),
+                    JSON.stringify(parsedNotes),
                     (writeErr) =>
                         writeErr
                             ? console.error(writeErr)
-                            : console.info('Successfully updated reviews!')
+                            : console.info('Successfully updated notes!')
                 );
             }
         });
