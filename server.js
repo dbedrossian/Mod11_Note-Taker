@@ -14,59 +14,76 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static('public'));
 
-app.get('/', (req, res) =>
-    res.sendFile(path.join(__dirname, '/public/index.html')));
+fs.readFile("./db/db.json", 'utf8', (error, data) => {
+    if(error) throw error
+    var notes = JSON.parse(data)
 
-app.get('/notes', (req, res) =>
-    res.sendFile(path.join(__dirname, '/public/notes.html')));
+    app.get('/api/notes', function (req, res) {
+        res.json(notes)
+    })
 
+    app.post('/api/notes', (req, res) => {
+        console.info(`${req.method} request received to add a new note`);
+    
+        const { title, text } = req.body;
+    
+        if (title && text) {
+            const newNote = {
+                title,
+                text,
+                id: uuid(),
+            };
 
-app.get('/notes', (req, res) => {
-    res.status(200).json(`${req.method} request received to get notes`);
-    console.info(`${req.method} request received to get notes`);
-});
+            notes.push(newNote);
+            console.log(newNote);
 
-app.post('/api/notes', (req, res) => {
-    console.info(`${req.method} request received to add a new note`);
+            fs.writeFile(
+                './db/db.json',
+                JSON.stringify(notes),
+                (writeErr) =>
+                    writeErr
+                        ? console.error(writeErr)
+                        : console.info('Successfully updated notes!')
+            );
+    
+            const response = {
+                status: 'success',
+                body: newNote,
+            };
+    
+            console.log(response);
+            res.status(201).json(response);
+        } else {
+            res.status(500).json('Error in posting note');
+        }
+    });
 
-    const { title, text } = req.body;
+    app.get('/api/notes/:id', function (req, res){
+        res.json(notes[req.params.id])
+    })
 
-    if (title && text) {
-        const newNote = {
-            title,
-            text,
-            review_id: uuid(),
-        };
+    app.delete('/api/notes/:id', function (req, res){
+        notes.splice(req.params.id, 1)
 
-        fs.readFile('./db/db.json', 'utf8', (err, data) => {
-            if (err) {
-                console.error(err);
-            } else {
-                const parsedNotes = JSON.parse(data);
-
-                parsedNotes.push(newNote);
-
-                fs.writeFile(
-                    './db/db.json',
-                    JSON.stringify(parsedNotes),
-                    (writeErr) =>
-                        writeErr
-                            ? console.error(writeErr)
-                            : console.info('Successfully updated notes!')
-                );
+        fs.writeFile(
+            './db/db.json',
+            JSON.stringify(notes, '\t'),
+            (writeErr) =>
+            {
+                if(writeErr) throw error;
+                return true;
             }
-        });
+        );
+        console.log("deleted note" + req.params.id);
+    })
 
-        const response = {
-            status: 'success',
-            body: newNote,
-        };
+    app.get('/notes', function (req, res) {
+        res.sendFile(path.join(__dirname, "/public/notes.html"))
+    })
 
-        console.log(response);
-        res.status(201).json(response);
-    } else {
-        res.status(500).json('Error in posting note');
-    }
+    app.get('*', function (req, res) {
+        res.sendFile(path.join(__dirname, "/public/index.html"))
+    })
 });
 
 app.listen(PORT, () =>
