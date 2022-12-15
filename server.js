@@ -29,12 +29,12 @@ app.get('/notes', (req, res) => {
 app.post('/api/notes', (req, res) => {
     console.info(`${req.method} request received to add a new note`);
 
-    const { noteTitle, noteText } = req.body;
+    const { title, text } = req.body;
 
-    if (noteTitle && noteText) {
+    if (title && text) {
         const newNote = {
-            noteTitle,
-            noteText,
+            title,
+            text,
             review_id: uuid(),
         };
 
